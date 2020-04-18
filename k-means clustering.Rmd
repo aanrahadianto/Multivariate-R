@@ -57,7 +57,7 @@ Data yang digunakan di artikel ini dapat diunduh di tautan berikut :
 ## Load Library 
 ```{r Import libraries, message=FALSE, warning=FALSE}
 library(readr)  #Membaca data
-library(dplyr)  #Manipulasi data
+library(dplyr)  #Data processing
 library(DT)     #Menampilkan tabel agar mudah dilihat di browser
 ```
 
