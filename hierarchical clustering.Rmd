@@ -41,7 +41,7 @@ Algoritma atau langkah-langkah dari metode _Agglomerative_ adalah sebagai beriku
 4. Ulangi langkah (2) dan (3) sebanyak N-1 kali hingga tersisa satu klaster yang memuat seluruh objek atau pengamatan. 
 
 ## Metode Pengukuran Jarak pada Agglomerative.
-Pendekatan dalam mengukur kesamaan suatu objek dengan objek lainnya adalah dengan menggunakan jarak antar pasangan objek. Pasangan objek yang memiliki jarak yang lebih dekat akan lebih 'mirip' karakteristiknya dibandingkan dengan pasangan objek yang memiliki jarak yang lebih jauh. Salah satu metode  untuk mengukur jarak antar objek adalah dengan menggunakan _Euclidian Distance_. _Euclidian Distance_ untuk mengukur jarak dua objek ( _u_ dan _v_ ) dengan _p_ variabel adalah :
+Pendekatan dalam mengukur kesamaan suatu objek dengan objek lainnya adalah dengan menggunakan jarak antar pasangan objek. Pasangan objek yang memiliki jarak yang lebih dekat akan lebih 'mirip' karakteristiknya dibandingkan dengan pasangan objek yang memiliki jarak yang lebih jauh. Salah satu metode  untuk mengukur jarak antar objek adalah dengan menggunakan _Euclidian Distance_. Misal terdapat dua objek ( _u_ dan _v_ ) dan sebanyak  _p_ variabel, maka _Euclidian Distance_-nya adalah :
 
 $$d_{u,v} = \sqrt{(u_1^2 -v_1^2) + (u_2^2 - v_2^2) + ... + (u_p^2 - v_p^2) }$$  
 
@@ -90,19 +90,20 @@ datatable(asean_data, caption = "Indikator Demografi Negara ASEAN 2015")
 ### Normalisasi Data
 Karena data yang digunakan memiliki satuan dan rentang yang berbeda, maka perlu dilakukan standardisasi data terlebih dahulu sebelum masuk ke analisis klaster. Untuk melakukan standardisasi data ke dalam normal baku di R dapat menggunakan fungsi `scale()` 
 ```{r}
-data_standardized <- round(scale(asean_data[,2:5]), 2) #Hanya memilih kolom/variabel yang berisikan indikator kelahiran dan kematian dan membulatkan hasilnya menjadi dua angka belakang koma
+data_standardized <- scale(asean_data[,2:5]) #Hanya memilih kolom/variabel yang berisikan indikator kelahiran dan kematian
 ```
 
 ### Menghitung Matriks Distance
 Matriks distance merupakan matriks yang berisikan pasangan jarak antar objek yang dihitung dengan _Euclidian Distance_. Dalam R, matriks distance dapat dihitung dengan menggunakan fungsi `dist()`
 ```{r}
-d <- round(dist(x = data_standardized, method = "euclidean"), 2)
+d <- dist(x = data_standardized, method = "euclidean")
 d
 ```
 ## Memulai Analisis Klaster
 
 ### Metode 1. Single Linkage 
 **DENGAN R**
+
 Untuk melakukan metode Single Linkage, dalam R dapat menggunakan fungsi `hclust()` kemudian memasukkan argument 'single' pada parameter 'method'.
 ```{r}
 hc_single <- hclust(d = d, method = "single")
@@ -110,15 +111,17 @@ hc_single <- hclust(d = d, method = "single")
 
 **MENGHITUNG MANUAL**
 
+Gambaran metode Single Linkage adalah klaster baru dibuat dengan cara mencari jarak pasangan objek yang nilainya terkecil di dalam matriks distance. Kemudian menghitung matriks distance baru berdasarkan jarak terdekat dengan klaster yang terbentuk sebelumnya. 
+
 **1. Menampilkan matriks distance** 
 
-$$D = \begin{bmatrix}
-0&2.58&0.77&4.20&2.86\\
-2.58&0&2.78&2.08&0.74\\
-0.77&2.78&0&4.55&3.21\\
-4.20&2.08&4.55&0&1.80\\
-2.86&0.74&3.21&1.80&0\\
-\end{bmatrix}$$
+|   |   1  |   2  |   3  |   4  |   5  |
+|---|:----:|:----:|:----:|:----:|:----:|
+| **1** |   0  | 2.58 | 0.77 | 4.20 | 2.86 |
+| **2** | 2.58 |   0  | 2.78 | 2.08 | 0.74 |
+| **3** | 0.77 | 2.78 |   0  | 4.55 | 3.21 |
+| **4** | 4.20 | 2.08 | 4.55 |   0  | 1.80 |
+| **5** | 2.86 | 0.74 | 3.21 | 1.80 |   0  |
 
 $$ min(d_{u,v}) = d_{5,2} = 0.74$$ sehingga negara ke-2 dan ke-5 digabungkan menjadi 1 klaster.
 
@@ -128,18 +131,12 @@ $$ d_{(5,2)3} = min(3.21, 2.78) =  2.78$$
 $$ d_{(5,2)4} = min(2.08, 1.80) =  1.80$$
 **3. Menampilkan matriks distance baru**
 
-$$D = \begin{bmatrix}
-0&2.58&2.78&1.80\\
-2.58&0&2.78&1.08\\
-2.78&0.77&0&4.55\\
-1.80&4.20&4.55&0\\
-\end{bmatrix}$$
-
-*Catatan* :
-Baris 1 = (52), Kolom 1 = (52)
-Baris 2 = 1, Kolom 2 = 1
-Baris 3 = 3, Kolom 3 = 3
-Baris 4 = 4, Kolom 4 = 4
+|      | (52) |   1  |   3  |   4  |
+|------|:----:|:----:|:----:|:----:|
+| **(52)** | 0    | 2.58 | 2.78 | 1.80 |
+| **1**    | 2.58 | 0    | 0.77 | 4.20 |
+| **3**    | 2.78 | 0.77 | 0    | 4.55 |
+| **4**    | 1.80 | 4.20 | 4.55 | 0    |
 
 $$ min(d_{u,v}) = d_{3,1} = 0.77$$ sehingga negara ke-1 dan ke-3 digabungkan menjadi 1 klaster.
 
@@ -148,30 +145,24 @@ $$ d_{(3,1)52} = min(2.58, 2.78) =  2.58$$
 $$ d_{(3,1)4} = min(4.20, 4.55) =  4.20$$
 **5. Menampilkan matriks distance baru**
 
-$$D = \begin{bmatrix}
-0&2.58&1.80\\
-2.58&0&4.20\\
-1.80&4.20&0\\
-\end{bmatrix}$$
+|          | (52) | (31) |   4  |
+|----------|:----:|:----:|:----:|
+| **(52)** | 0    | 2.58 | 1.80 |
+| **(31)** | 2.58 | 0    | 4.20 |
+| **4**    | 1.80 | 4.20 | 0    |
 
-*Catatan* :
-Baris 1 = (52), Kolom 1 = (52)
-Baris 2 = (31), Kolom 2 = (31)
-Baris 3 = 4, Kolom 3 = (4)
 
 $$ min(d_{u,v}) = d_{4,(52)} = 1.80$$ sehingga negara ke-2, ke-5, dan ke-3 digabungkan menjadi 1 klaster.
 
 **6. Menghitung jarak baru tiap objek dengan klaster yang baru terbentuk (negara ke-2, ke-5, dan ke-3)**
-$$ d_{524(31)} = min(2.58, 4.20) =  2.58$$
+$$ d_{52,4(31)} = min(2.58, 4.20) =  2.58$$
 **7. Menampilkan matriks distance baru**
 
-$$D = \begin{bmatrix}
-0&2.58\\
-2.58&0\\
-\end{bmatrix}$$
-*Catatan* :
-Baris 1 = (524), Kolom 1 = (524)
-Baris 2 = (31), Kolom 2 = (31)
+|           | (524) | (31) |
+|-----------|:-----:|:----:|
+| **(524)** | 0     | 2.58 |
+| **(31)**  | 2.58  | 0    |
+
 
 **MEMBUAT DENDOGRAM**
 
@@ -192,17 +183,19 @@ hc_complete <- hclust(d = d, method = "complete")
 ```
 
 **MENGHITUNG MANUAL**
-Langkah menghitung manual metode Complete Linkage tidak jauh berbeda dengan metode Single Linkage. Perbedaannya terletak ketika membuat matriks distance baru maka jarak yang digunakan adalah jarak terjauh antara dua objek.
+
+
+Langkah menghitung manual metode Complete Linkage tidak jauh berbeda dengan metode Single Linkage. Perbedaannya terletak ketika membuat matriks distance baru maka jarak yang digunakan adalah jarak terjauh antara objek dengan klaster yang dibuat sebelumnya.
 
 **1. Menampilkan matriks distance** 
 
-$$D = \begin{bmatrix}
-0&2.58&0.77&4.20&2.86\\
-2.58&0&2.78&2.08&0.74\\
-0.77&2.78&0&4.55&3.21\\
-4.20&2.08&4.55&0&1.80\\
-2.86&0.74&3.21&1.80&0\\
-\end{bmatrix}$$
+|   |   1  |   2  |   3  |   4  |   5  |
+|---|:----:|:----:|:----:|:----:|:----:|
+| **1** |   0  | 2.58 | 0.77 | 4.20 | 2.86 |
+| **2** | 2.58 |   0  | 2.78 | 2.08 | 0.74 |
+| **3** | 0.77 | 2.78 |   0  | 4.55 | 3.21 |
+| **4** | 4.20 | 2.08 | 4.55 |   0  | 1.80 |
+| **5** | 2.86 | 0.74 | 3.21 | 1.80 |   0  |
 
 $$ min(d_{u,v}) = d_{5,2} = 0.74$$ sehingga negara ke-2 dan ke-5 digabungkan menjadi 1 klaster.
 
@@ -212,18 +205,13 @@ $$ d_{(5,2)3} = max(3.21, 2.78) =  3.21$$
 $$ d_{(5,2)4} = max(2.08, 1.80) =  2.08$$
 **3. Menampilkan matriks distance baru**
 
-$$D = \begin{bmatrix}
-0&2.86&3.21&2.08\\
-2.86&0&0.77&4.20\\
-3.21&0.77&0&4.55\\
-2.08&4.20&4.55&0\\
-\end{bmatrix}$$
 
-*Catatan* :
-Baris 1 = (52), Kolom 1 = (52)
-Baris 2 = 1, Kolom 2 = 1
-Baris 3 = 3, Kolom 3 = 3
-Baris 4 = 4, Kolom 4 = 4
+|      | (52) |   1  |   3  |   4  |
+|------|:----:|:----:|:----:|:----:|
+| **(52)** | 0    | 2.86 | 3.21 | 2.08 |
+| **1**    | 2.86 | 0    | 0.77 | 4.20 |
+| **3**    | 3.21 | 0.77 | 0    | 4.55 |
+| **4**    | 2.08 | 4.20 | 4.55 | 0    |
 
 $$ min(d_{u,v}) = d_{3,1} = 0.77$$ sehingga negara ke-1 dan ke-3 digabungkan menjadi 1 klaster.
 
@@ -232,16 +220,11 @@ $$ d_{(3,1)52} = max(2.86, 3.21) =  3.21$$
 $$ d_{(3,1)4} = max(4.20, 4.55) =  4.55$$
 **5. Menampilkan matriks distance baru**
 
-$$D = \begin{bmatrix}
-0&3.21&2.08\\
-3.21&0&4.55\\
-2.08&4.55&0\\
-\end{bmatrix}$$
-
-*Catatan* :
-Baris 1 = (52), Kolom 1 = (52)
-Baris 2 = (31), Kolom 2 = (31)
-Baris 3 = 4, Kolom 3 = (4)
+|          | (52) | (31) |   4  |
+|----------|:----:|:----:|:----:|
+| **(52)** | 0    | 3.21 | 2.08 |
+| **(31)** | 3.21 | 0    | 4.55 |
+| **4**    | 2.08 | 4.55 | 0    |
 
 $$ min(d_{u,v}) = d_{4,(52)} = 2.08$$ sehingga negara ke-2, ke-5, dan ke-3 digabungkan menjadi 1 klaster.
 
@@ -249,10 +232,11 @@ $$ min(d_{u,v}) = d_{4,(52)} = 2.08$$ sehingga negara ke-2, ke-5, dan ke-3 digab
 $$ d_{524(31)} = max(3.21, 4.55) =  4.55$$
 **7. Menampilkan matriks distance baru**
 
-$$D = \begin{bmatrix}
-0&4.55\\
-4.55&0\\
-\end{bmatrix}$$
+|           | (524) | (31) |
+|-----------|:-----:|:----:|
+| **(524)** | 0     | 4.55 |
+| **(31)**  | 4.55  | 0    |
+
 *Catatan* :
 Baris 1 = (524), Kolom 1 = (524)
 Baris 2 = (31), Kolom 2 = (31)
