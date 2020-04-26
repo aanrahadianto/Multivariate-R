@@ -1,0 +1,180 @@
+---
+title: "Principal Component Analysis"
+author: "Nadhifan Humam F. (nadhifanhf@gmail.com)"
+output:
+  html_document:
+    toc: true
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+<style type = 'text/css'>
+h1 {color:#1a2451;}
+h2 {color:#ffbd4a;}
+h3 {color:#DCE35B;}
+</style>
+
+<style>
+body {
+text-align: justify
+} </style>
+
+# Analisis Komponen Utama
+
+Analisis Komponen Utama (AKU) merupakan salah satu analisis multivariat yang bertujuan untuk melihat/mengidentifikasi pola data dengan cara mereduksi dimensi (atau variabel) data menjadi dimensi yang lebih kecil dengan tetap mempertahankan informasi yang terdapat dalam data. Pada AKU, kita ingin mencari sebuah persamaan yang terdiri atas kombinasi linear dari berbagai variabel yang dapat menangkap varians atau keragaman data dengan maksimal. Persamaan linear inilah yang kemudian disebut dengan Komponen Utama (KU). Sifat dari KU ini adalah saling bebas antara satu KU dengan KU lainnya sehingga analisis komponen utama dapat mengatasi masalah multikolinearitas yang ada pada data.
+
+
+Sebagai tambahan, AKU merupakan analisis yang dapat diterapkan pada data yang berskala numerik dan tidak membutuhkan variabel respons (Y) dalam penghitungannya.
+
+
+## Analisis Diskriminan vs. PCA
+
+Secara umum metode analisis diskriminan serupa dengan metode PCA namun tak sama. Persamaannya adalah kedua metode merupakan metode yang mereduksi dimensi data menjadi dimensi yang lebih kecil dengan cara membentuk sebuah persamaan yang terdiri atas kombinasi linear dari berbagai variabel. Perbedaanya adalah pada 1] analisis diskriminan berfokus untuk membentuk persamaan yang dapat memaksimalkan pemisahan antar kelompok dan analisis ini membutuhkan informasi variabel respons berupa data ketegorik guna membentuk persamaannya. Persamaan ini biasa dinyatakan dalam sebuah fungsi yang dinamakan sebagai **fungsi diskriminan**. Di sisi lain, pada 2] PCA berfokus untuk membentuk persamaan yang dapat memaksimalkan & menjelaskan keragaman data dan analisis ini tidak membutuhkan informasi variabel respons saat membentuk persamaannya. Persamaan ini biasa dinyatakan dalam sebuah fungsi yang dinamakan sebagai **principal component**. Perbedaan kedua metode dapat dilihat pada grafik dibawah.
+
+![](picture1.png)
+
+## Langkah-langkah Analisis Komponen Utama
+
+Langkah -langkah ketika melakukan Analisis Komponen Utama adalah sebagai berikut :
+
+* Memilih variabel yang berskala numerik dan tidak memasukkan variabel respons (Y) jika ada.
+
+* Menstandardisasikan data ke dalam normal baku.
+
+Hal ini dilakukan jika variabel yang digunakan memiliki satuan dan rentang yang berbeda. Bisa juga digunakan matriks korelasi dengan catatan tidak perlu melakukan standardisasi data, karena matriks korelasi sudah mengatasi perbedaan satuan pada variabel.
+
+* Menghitung matriks ragam-peragam dari data yang sudah distandarisasi.  Jika menggunakan matriks korelasi maka lanjut ke langkah selanjutnya.
+
+* Menghitung vektor eigen dan nilai eigen dari matriks ragam-peragam atau matriks korelasi. 
+
+Vektor eigen merupakan koeffisien dari masing-masing variabel yang digunakan untuk membentuk komponen utama atau **loadings** sedangkan nilai eigen menggambarkan seberapa besar **varians** yang dapat ditangkap oleh komponen utama.
+
+Pada nantinya akan terbentuk komponen utama sebanyak jumlah variabel (*p*) yang dimasukkan ke dalam persamaan dan sifat dari komponen utama ini adalah saling tegak lurus dan saling bebas. Persamaan dari komponen utama adalah =
+
+$$KU_{i} = \phi_{1i}x_{1} + \phi_{2i}x_{1} + ... + \phi_{pi}x_{p} $$ 
+
+## Penentuan Banyaknya Komponen Utama
+
+Secara umum penentuan banyaknya komponen utama dapat dilakukan dengan tiga pendekatan :
+
+* Proporsi kumulatif varians yang dapat dijelaskan oleh komponen utama
+
+Komponen Utama yang diambil adalah komponen utama yang mencakup minimal 80% varians pada data atau dapat dikatakan minimal mampu menangkap 80% keragaman dari data.
+
+* Nilai Eigen 
+
+Komponen utama yang diambil adalah komponen utama yang memiliki nilai eigen lebih dari satu. Nilai eigen didapatkan dari matriks ragam-peragam atau matriks korelasi. Nilai eigen menjelaskan varians yang dijelaskan oleh komponen utama.
+
+* Scree Plot
+
+Scree Plot merupakan plot antara komponen utama ke-k dengan varians atau nilai eigen pada komponen tersebut. Banyaknya komponen utama yang diambil adalah titik dimana terdapat penurunan yang tajam sebelum titik tersebut dan disusul titik dimana terdapat penurunan yang tajam sebelum titik tersebut dan disusul penurunan yang tidak tajam setelah titik tersebut.
+
+
+# Contoh Kasus : Data USArrests
+
+Data yang digunakan adalah data USArrests yang sudah termuat di dalam R. Data ini menggambarkan kasus penahanan per 100 ribu penduduk warga negara di negara bagian di USA karena berbagai kasus pada tahun 1973. Data USArrests terdiri atas 50 pengamatan negara bagian dengan variabel : 1] Murder (per 100000), 2] Assault (per 100000) , 3] UrbanPop (populasi perkotaan dalam persen), dan 4] Rape (per 100000). Tujuan dilakukan analisis adalah untuk mereduksi dimensi (atau variabel) data menjadi dimensi yang lebih kecil dengan tetap mempertahankan informasi yang terdapat dalam data.
+
+**syntax** yang ada di artikel ini dapat diunduh [disini](https://github.com/nadhifanhf/Multivariate-R.git)
+
+## Load Library dan Dataset
+```{r Import libraries, message=FALSE, warning=FALSE}
+library(DT)     #Menampilkan tabel agar mudah dilihat di browser
+library(factoextra) #Visualisasi PCA
+```
+```{r}
+data("USArrests")
+datatable(USArrests)
+```
+
+## Menghitung Manual
+
+### Standarisasi Data
+
+Karena variabel UrbanPop (dalam persen) memiliki satuan yang berbeda dibanding dengan variabel yang lain, maka perlu dilakukan standardisasi data. Di R untuk melakukan standardisasi ke normal baku dapat menggunakan fungsi `scale`.
+
+```{r}
+USArrests_standardized <- scale(x = USArrests)
+```
+
+### Menghitung matriks ragam-peragam
+
+Matriks ragam-peragam dihitung dari data yang telah distandardisasi. Di R untuk menghitung matriks ragam-peragam dapat menggunakan fungsi `cov`.
+
+```{r}
+USArrests_covariance <- cov(USArrests_standardized)
+```
+
+### Menghitung vektor eigen dan nilai eigen
+
+Untuk menghitung vektor eigen dan nilai eigen di R dapat menggunakan fungsi `eigen`.
+```{r}
+USArrests_eigen <- eigen(USArrests_covariance)
+USArrests_eigen
+```
+
+Output yang dihasilkan dari fungsi `eigen` terdiri atas :
+
+* `values` yaitu nilai eigen yang sudah diurutkan dari yang tertinggi ke yang terendah. Nilai ini bisa digunakan untuk melihat seberapa besar varians yang dapat dijelaskan oleh komponen utama.
+* `vectors` yaitu vektor eigen. Nilai ini merupakan nilai *loadings* yang digunakan untuk membuat persamaan komponen utama.
+
+## Melakukan PCA dengan fungsi `prcomp`
+
+Selain penghitungan manual diatas, R telah menyediakan fungsi `prcomp` yang bisa digunakan untuk melakukan Analisis Komponen Utama. Fungsi ini hanya digunakan untuk raw data, dimana standarisasi data sudah bisa dilakukan dengan memasukkan argument TRUE pada parameter scale. dan center.
+
+```{r}
+USAArrests_pca <- prcomp(x = USArrests, scale. = TRUE, center = TRUE) 
+names(USAArrests_pca)
+```
+
+Fungsi `prcomp` menghasilkan beberapa output sebagai berikut :
+
+* `sdev` yaitu nilai standar deviasi dari komponen utama yang terbentuk. Nilai kuadrat dari nilai ini merupakan nilai eigen atau varians dari komponen utama.
+* `rotation` yaitu vektor eigen atau koeffisien dari masing-masing variabel yang digunakan untuk membentuk komponen utama. Nilai ini juga bisa disebut **loadings**.
+* `center` yaitu nilai rata-rata dari variabel yang digunakan.
+* `scale` yaitu nilai standar deviasi dari variabel yang digunakan.
+* `x` yaitu nilai data setelah dimasukkan ke dalam persamaan komponen utama.
+
+## Menentukan Jumlah Komponen Utama
+
+Terdapat beberapa pendekatan ketika ingin menentukan jumlah komponen utama, salah satunya adalah dengan melihat proporsi kumulatif varians yang dapat dijelaskan oleh komponen utama (minimal 70%).  Untuk melihatnya di R dapat menggunakan fungsi `summary` yang diisi objek `USAArrests_pca`.
+
+```{r}
+summary(USAArrests_pca)
+```
+
+Output diatas memberi petunjuk bahwa sebaiknya kita memilih dua komponen utama, karena  kedua komponen utama telah mampu menangkap 86,75% keragaman data.
+
+## Persamaan Komponen Utama
+
+Persamaan komponen utama dibentuk berdasarkan komponen **loadings** atau vektor eigen .
+
+```{r}
+USAArrests_pca$rotation
+```
+Dilihat dari output diatas, persamaan komponen utama yang terbentuk adalah =
+
+$$KU_{1} = - \ 0.54Murder \ -0.58Assault \ -0.28UrbanPop \ -0.54Rape$$ 
+$$KU_{2} = - \ 0.42Murder \ +0.19Assault \ -0.87UrbanPop \ -0.16Rape$$ 
+
+Interpretasi dari persamaan diatas adalah semakin besar koefisien suatu variabel pada komponen utama, semakin besar pula hubungan pengaruh variabel tersebut dengan komponen utama yang bersesuaian. koeffisien terbesar pada KU1 variabel Murder, Assault, dan Rape sehingga komponen ini dapat dinamakan komponen jenis kejahatan. Sedangkan koefisien terbesar pada KU2 adalah variabel UrbanPop sehingga komponen ini dapat dinamakan banyaknya populasi wilayah perkotaan. 
+
+## "Rekonstruksi" Data
+Setelah didapatkan persamaan komponen utamanya, maka kita dapat 'merekonstruksi' data dengan memasukkan nilai variabel pada komponen utama yang dibuat. Di R cukup dengan mengakses atribut `x` pada objek `USAArrests_pca`. Dapat dilihat bahwasanya kita dapat mereduksi data yang berawal dari 4 dimensi/variabel menjadi 2 dimensi/variabel namun tetap menggambarkan keragaman data. Nilai ini juga dapat digunakan untuk keperluan analisis selanjutnya seperti regresi maupun klasifikasi. 
+
+```{r}
+head(USAArrests_pca$x[,1:2])
+```
+
+```{r}
+fviz_pca(USAArrests_pca) #Visualisasi data hasil rekonstruksi
+```
+
+
+# Referensi
+
+* Modul Mata Kuliah Analisis Peubah Ganda Angkatan 54 STIS
+* Buku Data Mining dengan R : Konsep serta Implementasi (Penerbit : In Media)
+* <http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/118-principal-component-analysis-in-r-prcomp-vs-princomp/>
+* <https://sebastianraschka.com/Articles/2014_pca_step_by_step.html>
