@@ -1,0 +1,194 @@
+---
+title: "Discriminant Analysis Manual"
+author: "Nadhifan Humam F. (nadhifanhf@gmail.com)"
+output:
+  html_document:
+    toc: true
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+<style type = 'text/css'>
+h1 {color:#1a2451;}
+h2 {color:#ffbd4a;}
+h3 {color:#DCE35B;}
+</style>
+
+<style>
+body {
+text-align: justify
+} </style>
+
+
+# Contoh Kasus : Pengelompokkan Species Serangga.  
+
+Data yang digunakan adalah data spesies serangga yang terdiri atas 20 pengamatan dengan variabel : 1] Lebar dari joint tarsus (kaki) ke-1, 2] Lebar dari joint tarsus (kaki) ke-2, 3] Lebar dari aedeagus (organ reproduksi), 4] Species dari serangga. Tujuan dilakukan analisis adalah untuk mengelompokkan spesies serangga berdasarkan ketiga variabel dengan metode Analisis Diskriminan.
+
+## Load Library dan Dataset
+```{r Import libraries, message=FALSE, warning=FALSE}
+library(DT)     #Menampilkan tabel agar mudah dilihat di browser
+library(MVN)    #Uji multivariate normal
+library(biotools) #Melakukan uji Box-M
+library(dplyr)  #Data processing
+```
+```{r}
+insect <- read.csv('insect.csv')
+datatable(insect)
+```
+
+## Pengujian Asumsi
+
+**Multivariate Normal**
+
+Ketika menguji apakah variabel prediktor berdistribusi multivariate normal, di R dapat menggunakan fungsi `mvn`. Pengujian dilakukan hanya pada variabel prediktor (berskala numerik). 
+
+```{r, results = 'hide'}
+mvn(data = insect[, c(2:4)], multivariatePlot = 'qq') #hanya mengambil kolom variabel prediktor
+```
+
+
+Dari grafik Chi-Square QQ Plot diatas, dapat dilihat bahwasanya secara umum terbentuk garis linear X = Y, maka dapat dikatakan bahwa data berdistribusi multivariate normal.
+
+**Matriks Ragam-peragam antar Kategori Spesies Sama**
+
+Untuk menguji apakah matriks ragam-peragam antar kategori spesies sama, digunakan statistik uji Box's M. untuk melakukan uji statistik Box's M di R dapat menggunakan fungsi `boxM`.
+```{r}
+boxM(data = insect[, c(2:4)], grouping = insect[,1])
+```
+
+Output diatas menunjukkan bahwa dengan tingkat signifikansi 5%, didapat keputusan untuk gagal menolak hipotesis nol atau dengan kata lain tidak terdapat perbedaan matriks ragam-peragam antar kategori spesies.
+
+**Terdapat perbedaan rata-rata antar kategori spesies**
+
+Untuk menguji apakah terdapat perbedaan rata-rata (nilai variabel prediktor) antar kategori spesies, digunakan Uji Manova dengan statistik uji *Wilk's Lambda* . Untuk melakukan uji tersebut di R dapat menggunakan fungsi `manova` dan mengisikan Wilks pada parameter `test`.
+```{r}
+m <- manova(formula = cbind(insect$X1, insect$X2, insect$X3) ~ insect$Species)
+summary(object = m, test = 'Wilks')
+```
+Output diatas menunjukkan bahwa dengan tingkat signifikansi 5%, didapat keputusan untuk menolak hipotesis nol atau dengan kata lain terdapat perbedaan rata-rata (nilai variabel prediktor) antar kategori spesies.
+
+## Memulai Analisis Diskriminan
+
+### Menghitung *Linear Score Function* untuk Masing-Masing Kelompok
+
+Pengklasifikasian suatu objek didasarkan pada *Linear Score Function*, yaitu sebuah fungsi yang membutuhkan nilai rata-rata populasi beserta matriks ragam-peragam gabungan (*S pooled*). Fungsi ini dibuat untuk masing-masing grup.
+
+$$s_{i}^L (x): -\frac 1 2 \bar{x}_{i}^T  S_{p}^{-1} \bar{x}_{i} + \bar{x}_{i}^T S_{p}^{-1} x + \log \ p_{i}$$
+
+Dengan :
+
+$$s_{pooled} =  \frac {(n_1-1)S_1 + (n_2-1)S_2}{(n_1-1)+(n_2-1)}$$ 
+$$i = grup \ ke-i$$ 
+$$x = vektor \ pengamatan \ baru$$
+$$p_i = prior \ probabilities \ (jika \ tidak \ diketahui \ menggunakan \ proporsi \ masing-masing \ grup)$$
+
+Aturan klasifikasi adalah dengan **mengklasifikasikan suatu objek ke dalam grup berdasarkan nilai *linear score* terbesar**.
+
+
+**Menghitung vektor rata-rata untuk Serangga A**
+
+```{r}
+insectA <- insect %>%
+  filter(Species == 'a')
+insectA_mean <- sapply(insectA[, -1], mean)
+insectA_mean
+```
+
+**Menghitung matriks kovarians untuk Serangga A**
+
+```{r}
+insectA_cov <- cov(insectA[, -1])
+insectA_cov
+```
+
+
+**Menghitung vektor rata-rata untuk Serangga A**
+```{r}
+insectB <- insect %>%
+  filter(Species == 'b')
+insectB_mean <- as.matrix(sapply(insectB[, -1], mean))
+insectB_mean
+```
+
+
+**Menghitung matriks kovarians untuk Serangga B**
+```{r}
+insectB_cov <- cov(insectB[, -1])
+insectB_cov
+```
+
+**Menghitung matriks kovarians gabungan (S pooled)**
+```{r}
+Spooled <- (9 * insectA_cov + 9 * insectB_cov) / (9+9)
+Spooled
+```
+
+
+
+### *Linear Score Function* untuk serangga A
+
+Intercept
+
+```{r}
+-0.5 * t(insectA_mean) %*% solve(Spooled) %*%  insectA_mean
+```
+
+Koeffisien
+```{r}
+t(insectA_mean) %*% solve(Spooled)
+```
+
+Untuk serangga A 
+$$\hat{d}_{a}^L (x): -247.276 \ - 1.417X_1 \ + 1.520X_2 + \ 10.954X_3 \ + \log 0.5  $$
+
+### *Linear Score Function* untuk serangga B
+
+Intercept
+
+```{r}
+-0.5 * t(insectB_mean) %*% solve(Spooled) %*%  insectB_mean
+```
+
+Koeffisien
+
+```{r}
+t(insectB_mean) %*% solve(Spooled)
+```
+
+$$\hat{d}_{b}^L (x): -193.178 \ - 0.738X_1 \ + 1.113X_2 + \ 8.250X_3 \ + \log 0.5  $$
+
+### Mengklasifikasikan Objek Baru
+
+Jika terdapat sebuah serangga dengan karakteristik sebagai berikut, kemanakah serangga ini dikategorikan?
+
+```{r, warning=FALSE}
+newdata <- data.frame('Variable' = c('X1', 'X2', 'X3'), 'Measurement' = c(194, 124, 49))
+datatable(newdata)
+```
+
+Menghitung *Linear Score Function* untuk masing-masing grup dengan cara memasukkan semua nilai variabel ke dalam persamaan :
+
+$$\hat{d}_{a}^L (x): -247.276 \ - 1.417X_1 \ + 1.520X_2 + \ 10.954X_3 \ + \log 0.5 \ = \ 202.359 $$
+
+$$\hat{d}_{b}^L (x): -193.178 \ - 0.738X_1 \ + 1.113X_2 + \ 8.250X_3 \ + \log 0.5 \ = \ 205.219 $$
+
+
+Berdasarkan aturan klasifikasi, serangga tersebut masuk ke dalam **spesies B** karena nilai *linear scores* pada B yang lebih tinggi dibanding A. 
+
+Selain itu, kita juga bisa menghitung *posterior probabilities*, yaitu peluang serangga tersebut masuk ke dalam suatu spesies
+
+**Peluang Serangga masuk spesies A**
+
+$$p(a|x): \frac{\exp(202.359)}{\exp(202.359)\ + \ \exp(205.219)} = 0.05$$
+**Peluang Serangga masuk spesies B**
+
+$$p(b|x): \frac{\exp(205.219)}{\exp(202.359)\ + \ \exp(205.219)} = 0.95$$
+
+Dari nilai diatas, kita percaya 95% bahwa serangga tersebut masuk ke dalam spesies B.
+
+
+# Referensi
+
+<https://online.stat.psu.edu/stat505/lesson/10>
