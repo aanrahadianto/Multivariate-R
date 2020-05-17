@@ -1,0 +1,158 @@
+---
+title: " Analisis Komponen Utama (PCA) pada Data Indikator Kesehatan di Pulau Jawa Tahun 2017"
+author: "Nadhifan Humam F. (nadhifanhf@gmail.com)"
+output:
+  html_document:
+    toc: true
+    number_sections: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+<style type = 'text/css'>
+h1 {color:#1a2451;}
+h2 {color:#ffbd4a;}
+h3 {color:#DCE35B;}
+</style>
+
+<style>
+body {
+text-align: justify
+} </style>
+
+
+![](37126.jpg)
+
+
+<a href="https://www.freepik.com/free-photos-vectors/people">People vector created by rawpixel.com - www.freepik.com</a>  
+
+
+# Studi Kasus : Indikator Kesehatan di Pulau Jawa Tahun 2017
+
+Salah satu modal dasar dalam pelaksanaan pembangunan nasional adalah kondisi kesehatan masyarakat. Kondisi kesehatan masyarakat mencerminkan kemajuan pembangunan suatu wilayah. Masyarakat yang sehat merupakan prasyarat bagi peningkatan produktivitas suatu wilayah. Masyarakat yang memiliki kesehatan yang baik, tentu dapat beraktivitas dengan optimal sehingga produktivitasnya dapat berjalan optimal pula.
+
+
+Disebutkan dalam Tujuan Utama Berkelanjutan No 3, bahwa negara Indonesia ingin menjamin kehidupan yang sehat dan mendorong kesejakteraan bagi semua orang di segala usia. Untuk mencapai tujuan tersebut, pemerintah telah menerapkan berbagai program dan kebijakan. Untuk memonitor dan mengevaluasi berbagai kebijakan, diperlukan data di sektor kesehatan yang lengkap dan akurat yang dapat menggambarkan karakteriktik kesehatan di Indonesia.   
+Permasalahan yang ditemukan adalah terlalu banyak indikator menggambarkan karakteristik kesehatan di Indonesia. Indikator tersebut meliputi sarana kesehatan, pelayanan kesehatan, angka kesakitan, dan sebagainya. Indikator yang banyak ini dapat berujung kepada kesulitan dalam menggambarkan dan menginterpretasikan kesehatan di Indonesia. Ditambah terlalu banyaknya variabel seringkali berakibat kepada masalah multikolinearitas atau terdapat beberarapa variabel yang saling berhubungan sehingga dapat menimbulkan masalah ketika dilakukan analisis regresi dan klasifikasi.
+
+Penelitian ini berfokus pada indikator kesehatan yang berada di Pulau Jawa. karena pertimbangan bahwa pembangunan sarana dan prasarana kesehatan di Pulau Jawa lebih merata dibanding pulau lain. Selain itu, indikator kesehatan di Pulau Jawa dirasa dapat menggambarkan keadaan kesehatan di Indonesia.
+
+
+Dari latar belakang diatas, penelitian ini bertujuan untuk mereduksi beberapa variabel kesehatan menjadi beberapa variabel baru yang jumlahnya lebih kecil namun tanpa menghilangkan karakteristik dari variabel kesehatan tersebut. Hal ini dilakukan agar lebih mudah untuk menginterpretasikan data-data tersebut. Selain itu, penelitian ini bertujuan untuk mengidentifikasi indikator utama atau indikator yang berperan besar dalam menjelaskan karakteristik kesehatan di Pulau Jawa pada Tahun 2017.
+
+
+# Ruang Lingkup Studi Kasus
+
+Unit analisis dalam penelitian ini adalah seluruh kabupaten atau kota di Pulau Jawa yang berjumlah 119 kabupaten atau kota. Faktor ketersediaan dan kelengkapan data menyebabkan peneliti memutuskan untuk mengambil data pada tahun 2017. Data pada tahun 2017 dipilih karena dirasa masih menggambarkan karakteristik kesehatan di Pulau Jawa. Data yang digunakan merupakan data sekunder yang bersumber dari publikasi Profil Kesehatan Provinsi pada tahun 2017. Publikasi tersebut dikeluarkan oleh masing-masing Dinas Provinsi di Pulau Jawa yang mencakup di dalamnya data dan indikator dari setiap kabupaten atau kota di provinsi yang bersangkutan.
+
+
+Pada contoh ini tidak diambil semua indikator yang terdapat pada publikasi Profil Kesehatan Provinsi, melainkan hanya megambil 8 indikator yang dirasa bisa mewakili berbagai indikator yang ada. Adapun indikator-indikator (variabel-variabel) yang digunakan  tertera sebagai berikut :
+
+|                    Nama Indikator                    |                                                                                              Keterangan Indikator                                                                                              |
+|:----------------------------------------------------:|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:|
+| Angka Harapan Hidup (X1)                             | Rata-rata tahun hidup yang masih akan dijalani oleh seseorang yang telah berhasil mencapai umur x, pada suatu tahun tertentu, dalam situasi mortalitas yang berlaku di lingkngan masyarakatnya.                |
+| Rasio Puskesmas per 30 Ribu Penduduk (X2)            | Rasio puskesmas per 30 ribu penduduk                                                                                                                                                                           |
+| Rasio Rumah Sakit per 100 Ribu Penduduk (X3)         | Rasio rumah sakit per 100 ribu penduduk                                                                                                                                                                        |
+| Persentase Rumah Tangga PHBS (X4)                    | Rumah tangga PHBS adalah rumah tangga yang melaksanakan 10 indikator berperilaku hidup bersih dan sehat (PHBS)                                                                                                 |
+| Persentase RT dengan Sanitasi Layak (X5)             | Rumah tangga dengan sanitasi layak adalah rumah tangga yang menggunakan jamban komunal, jamban berleher angsa dan septic tank                                                                                  |
+| Persentase Bayi dengan Berat Badan Lahir Rendah (X6) | Bayi dengan berat badan lahir rendah (BBLR) adalah bayi yang memiliki berat badan kurang dari 2,5 kilogram saat dilahirkan                                                                                     |
+| Persentase Bayi yang Mendapat ASI Eksklusif (X7)     | ASI Eksklusif adalah pemberian ASI saja tanpa makanan dan minuman lain sampai bayi berusia 6 bulan, kemudian pemberian ASI harus tetap dilanjutkan sampai bayi berusia 2 (dua) tahun walaupun bayi sudah makan |
+| Angka Kesakitan Diare (per 1000 ribu penduduk) (X8)  | Diare merupakan sebuah penyakit yang ditandai dengan frekuensi buang air besar lebih dari tiga kali per hari dengan feses yang encer                                                                           |
+
+```{r, include=FALSE}
+library(readr)
+library(DT)
+KesehatanJawa <- read_csv("D:/apg/UAS/data.csv")
+```
+
+```{r, echo=FALSE}
+datatable(KesehatanJawa)
+```
+
+**Data yang terdapat dalam contoh ini dapat diunduh**
+[disini](https://github.com/nadhifanhf/Multivariate-R.git) 
+
+# Pembahasan
+
+
+## Penentuan Banyaknya Komponen Utama
+
+Salah satu metode yang digunakan untuk menentukan banyaknya komponen utama adalah dengan melihat proporsi kumulatif varians yang dapat dijelaskan oleh komponen utama. Proporsi varians komponen utama didapatkan dari nilai eigen pada komponen utama yang bersesuaian dibagi dengan total semua nilai eigen. Menurut Johnson, Komponen Utama yang diambil adalah komponen utama yang mencakup minimal 80% kumulatif varians pada data atau dapat dikatakan minimal mampu menangkap 80% keragaman dari data. 
+
+```{r}
+pr.out <- prcomp(x = KesehatanJawa[, c(-1)], center = TRUE, scale. = TRUE) #Tidak mengambil kolom Kabupaten/Kota
+summary(pr.out)
+```
+
+Berdasarkan informasi dari tabel diatas, banyaknya komponen utama yang dapat diambil sebanyak 5 komponen utama. Hal ini karena 5 komponen utama telah menangkap minimal 80 persen varians data. Kelima komponen utama telah mampu menangkap 81, 752 persen dari total keragaman data.
+
+
+Selain itu, pendekatan yang dapat digunakan untuk menentukan jumlah komponen utama adalah dengan Scree Plot. Scree Plot merupakan plot antara komponen utama dengan varians nilai eigennya. Banyaknya komponen utama yang diambil adalah pada titik ekstrim dimana garis kurva mulai melandai. Dengan kata lain penambahan komponen utama tidak signifikan dalam menambah total keragaman data yang dapat diambil. Scree Plot yang terbentuk ditunjukkan pada grafik berikut.
+
+```{r}
+KesehatanJawa_cor <- cor(KesehatanJawa[ ,-1]) #tidak mengambil kolom nama kabupaten/kota
+KesehatanJawa_eig <- eigen(KesehatanJawa_cor)
+scree_data <- data.frame(eigen_value = eigen(KesehatanJawa_cor)$values, PC = 1:8)
+plot(x = scree_data$PC, y = scree_data$eigen_value, type = 'b',
+     xlab = 'Komponen Utama ke-', ylab = 'Varians (Nilai Eigen)', main = 'Scree Plot')
+```
+
+Berdasarkan Scree Plot diatas, banyaknya komponen utama yang dipilih adalah 5. Hal ini karena titik ekstrim dimana garis kurva mulai melandai ditunjukkan pada komponen ke 5. Berdasarkan informasi ini jumlah komponen yang dipilih berdasarkan metode proporsi kumulatif varians dengan metode Scree Plot yaitu 5 komponen utama.
+
+## Menghitung Koefisien Komponen Utama
+
+Persamaan komponen utama dibentuk berdasarkan nilai vektor eigen dari data matriks korelasi antar tiap indikator. Matriks korelasi digunakan karena indikator kesehatan memiliki satuan yang berbeda-beda.
+
+```{r}
+#Menggunakan fungsi `prcomp`
+pr.out <- prcomp(x = KesehatanJawa[, c(-1)], center = TRUE, scale. = TRUE)
+pr.out
+```
+
+## Interpretasi dan Penamaan Komponen Utama
+
+Nilai koeffisien setiap indikator dengan setiap komponen utama yang terbentuk digunakan sebagai alat bantu dalam menginterpretasikan setiap komponen utama. Selain itu, nilai ini juga dapat digunakan untuk memberi nama pada komponen utama. Akibatnya penamaan komponen utama didasarkan pada nilai koeffisien variabel terbesar karena sudah tidak dipengaruhi varians dari variabel yang bersangkutan . Sebagai tambahan, persamaan yang terbentuk merupakan persamaan dari data yang telah distandarisasi.
+
+* **Komponen Utama 1 (KU1)**
+
+$$KU_{1} = \ 0.5798 X_{1} \ -0.0228X_{2}\ +0.2400X_{3} \ +0.5082X_{4} \ + 0.4765X_{5} \ +0.0763X_{6} \ - 0.2569 X_{7} \ -0.2205X_{8}$$ 
+
+KU1 menggambarkan ukuran dari angka harapan hidup, rumah tangga PHBS, dan rumah tangga dengan sanitasi layak. Ketiga indikator ini merupakan indikator terkuat dalam KU1. Berdasarkan informasi tersebut, maka KU1 dapat dinamakan dengan Perilaku Masyarakat Hidup Sehat. Ditambah, komponen ini merupakan komponen yang paling berperan besar dalam menjelaskan indikator kesehatan karena dapat menangkap keragaman data terbesar.
+
+* **Komponen Utama 2 (KU2)**
+
+$$KU_{2} = - \ 0.0328 X_{1} \ +0.4626X_{2}\ +0.4414X_{3} \ -0.2503X_{4} \ + 0.2641X_{5} \ +0.4605X_{6} \ + 0.4904 X_{7} \ -0.0723X_{8}$$ 
+KU2 menggambarkan ukuran rasio puskesmas terhadap penduduk, bayi dengan berat badan lahir rendah, dan bayi yang mendapat ASI eksklusif. Ketiga indikator ini merupakan indikator terkuat dalam KU2. Berdasarkan informasi tersebut, maka KU2 dapat dinamakan sebagai Akses dan Kondisi Kesehatan Bayi.
+
+* **Komponen Utama 3 (KU3)**
+
+$$KU_{3} =\ 0.1512 X_{1} \ -0.3298X_{2}\ +0.4814X_{3} \ -0.0364X_{4} \ + 0.0898X_{5} \ -0.3293X_{6} \ + 0.2311 X_{7} \ +0.6822X_{8}$$ 
+
+KU3 menggambarkan ukuran rasio puskesmas terhadap penduduk, rasio rumah sakit terhadap penduduk dan angka kesakitan diare . Ketiga indikator ini merupakan indikator terkuat dalam KU3. Berdasarkan informasi tersebut, maka KU3 dapat dinamakan sebagai Pelayanan Kesehatan Penduduk.
+
+* **Komponen Utama 4 (KU4)**
+
+$$KU_{4} = -\ 0.1711 X_{1} \ -0.6662X_{2}\ +0.3324X_{3} \ +0.0458X_{4} \ - 0.0919X_{5} \ -0.5040X_{6} \ - 0.3866 X_{7} \ +0.0264X_{8}$$
+
+KU4 menggambarkan ukuran rasio puskesmas terhadap penduduk, rasio rumah sakit terhadap penduduk, dan bayi dengan berat badan lahir rendah. Ketiga indikator ini merupakan indikator terkuat dalam KU4. Berdasarkan informasi tersebut, maka KU4 dapat dinamakan sebagai Fasilitas Kesehatan.
+
+* **Komponen Utama 5 (KU5)**
+
+$$KU_{4} = \ 0.1423 X_{1} \ -0.2043X_{2}\ +0.1026X_{3} \ -0.3791X_{4} \ + 0.1315X_{5} \ -0.5624X_{6} \ + 0.2840 X_{7} \ -0.6079X_{8}$$
+KU5 menggambarkan ukuran rumah tangga PHBS, bayi dengan berat badan lahir rendah dan angka kesakitan diare. Ketiga indikator ini merupakan indikator terkuat dalam KU5. Berdasarkan informasi tersebut, maka KU5 dapat dinamakan sebagai Kesehatan Masyarakat.
+
+
+# Kesimpulan
+
+Dengan metode analisis komponen utama, dapat diketahui bahwasanya data kesehatan di Pulau Jawa yang terdiri atas 8 indikator dapat direduksi menjadi 5 indikator namun tetap dapat menggambarkan keragaman dari data awal. Kelima indikator tersebut adalah Perilaku Masyarakat Hidup Sehat, Akses dan Kondisi Kesehatan Bayi, Pelayanan Kesehatan Penduduk, Fasilitas Kesehatan, dan Kesehatan Masyarakat. Dari kelima indikator tersebut yang berperan besar dalam menjelaskan kesehatan di Pulau Jawa adalah Perilaku Masyarakat Hidup Sehat. Selain itu indikator baru yang terbentuk ini dapat digunakan untuk analisis lanjutan seperti regresi dan klasifikasi dan telah mengatasi masalah multikolinearitas karena memiliki sifat saling bebas satu sama lain. 
+
+
+# Referensi
+
+* Modul Mata Kuliah Analisis Peubah Ganda Angkatan 54 STIS
+* Website Department of Statistic. PennState Eberly College of Science. Principal   Component Analysis (PCA). <https://online.stat.psu.edu/stat505/lesson/11/11.6.>
+* Buku Data Mining dengan R : Konsep serta Implementasi (Penerbit : In Media)
+* <http://www.sthda.com/english/articles/31-principal-component-methods-in-r-practical-guide/118-principal-component-analysis-in-r-prcomp-vs-princomp/>
+* <https://sebastianraschka.com/Articles/2014_pca_step_by_step.html>
+* Profil Kesehatan Provinsi 2017
